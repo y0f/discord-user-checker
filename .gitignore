@@ -1,0 +1,11 @@
+tokens.txt
+good.txt
+bad.txt
+available.txt
+unavailable.txt
+checker.exe
+checker
+*.exe
+*.dll
+*.so
+*.dylib
