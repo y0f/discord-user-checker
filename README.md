@@ -25,7 +25,7 @@ go build -o checker .
 
 ```json
 {
-  "method": "me"
+  "method": "friends"
 }
 ```
 
