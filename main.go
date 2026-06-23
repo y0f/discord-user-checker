@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -157,15 +158,40 @@ type checkResult struct {
 	raw        string
 }
 
+const userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
+var xSuperProperties = func() string {
+	props := map[string]any{
+		"os":                       "Windows",
+		"browser":                  "Chrome",
+		"device":                   "",
+		"system_locale":            "en-US",
+		"browser_user_agent":       userAgent,
+		"browser_version":          "120.0.0.0",
+		"os_version":               "10",
+		"referrer":                 "",
+		"referring_domain":         "",
+		"referrer_current":         "",
+		"referring_domain_current": "",
+		"release_channel":          "stable",
+		"client_build_number":      9999,
+		"client_event_source":      nil,
+	}
+	b, _ := json.Marshal(props)
+	return base64.StdEncoding.EncodeToString(b)
+}()
+
 func buildHeaders(token string) map[string]string {
 	return map[string]string{
-		"authority":       "discord.com",
-		"accept":          "*/*",
-		"accept-language": "en-US,en;q=0.9",
-		"content-type":    "application/json",
-		"origin":          "https://discord.com",
-		"referer":         "https://discord.com/channels/@me",
-		"authorization":   token,
+		"authority":          "discord.com",
+		"accept":             "*/*",
+		"accept-language":    "en-US,en;q=0.9",
+		"content-type":       "application/json",
+		"origin":             "https://discord.com",
+		"referer":            "https://discord.com/channels/@me",
+		"user-agent":         userAgent,
+		"x-super-properties": xSuperProperties,
+		"authorization":      token,
 	}
 }
 
@@ -284,6 +310,7 @@ func worker(id int, tokens *[]*Token, tokensMu *sync.Mutex, queue chan string, m
 		tokensMu.Lock()
 		best := getBestToken(*tokens)
 		if best == nil {
+			queue <- username
 			tokensMu.Unlock()
 			queueLock.Unlock()
 			logWarning("Worker %d: No available tokens. Terminating.", id)
@@ -484,8 +511,9 @@ func validateToken(token, method string) string {
 	if err != nil {
 		return "connection_error"
 	}
-	req.Header.Set("authorization", token)
-	req.Header.Set("content-type", "application/json")
+	for k, v := range buildHeaders(token) {
+		req.Header.Set(k, v)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
