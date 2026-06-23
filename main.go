@@ -87,6 +87,9 @@ func loadFile(name string) []string {
 			lines = append(lines, line)
 		}
 	}
+	if err := sc.Err(); err != nil {
+		return nil
+	}
 	return lines
 }
 
@@ -547,7 +550,7 @@ func validateToken(token, method string) string {
 }
 
 func main() {
-	fmt.Println(banner)
+	fmt.Print(banner)
 
 	threads := flag.Int("t", 1, "Number of threads to use")
 	helperMode := flag.Bool("helper", false, "Run the wordlist helper utility")
