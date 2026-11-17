@@ -7,7 +7,7 @@ A fast, multithreaded Discord username availability checker written in Go. Suppo
 
 ## Requirements
 
-- Go 1.21 or higher
+- Go 1.26.11 or higher
 
 ## Installation
 
